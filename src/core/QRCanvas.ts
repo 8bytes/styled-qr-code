@@ -9,7 +9,7 @@ import { QRCode, Gradient, FilterFunction, Options } from '../types';
 import getMode from '../tools/getMode.js';
 import { Canvas, CanvasRenderingContext2D, ExportFormat, RenderOptions, loadImage, Image } from 'skia-canvas';
 import qrcode from 'qrcode-generator';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import mergeDeep from '../tools/merge.js';
 import sanitizeOptions from '../tools/sanitizeOptions.js';
 
@@ -496,6 +496,6 @@ export default class QRCanvas {
    */
   async toFile(filePath: string, format: ExportFormat = 'png', options?: RenderOptions): Promise<void> {
     await this.created;
-    return fs.writeFile(filePath, await this._canvas.toBuffer(format, options));
+    return fs.promises.writeFile(filePath, await this._canvas.toBuffer(format, options));
   }
 }
