@@ -1,5 +1,5 @@
 {
-  "name": "@loskir/styled-qr-code-node",
+  "name": "@8bytes/styled-qr-code-node",
   "version": "1.5.1",
   "description": "Add a style and an image to your QR code",
   "files": [
@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loskir/styled-qr-code.git"
+    "url": "git+https://github.com/8bytes/styled-qr-code.git"
   },
   "keywords": [
     "qr",
@@ -58,6 +58,6 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/loskir/styled-qr-code/issues"
+    "url": "https://github.com/8bytes/styled-qr-code/issues"
   }
 }

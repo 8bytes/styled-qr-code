@@ -2,7 +2,7 @@
 .idea
 
 # built files
-/dist
+# /dist
 
 # npm modules
 /node_modules
