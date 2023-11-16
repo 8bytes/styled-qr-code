@@ -4,12 +4,11 @@ import QRDot from '../figures/dot/QRDot.js';
 import QRCornerSquare from '../figures/cornerSquare/QRCornerSquare.js';
 import QRCornerDot from '../figures/cornerDot/QRCornerDot.js';
 import defaultOptions, { RequiredOptions } from './QROptions.js';
-import gradientTypes from '../constants/gradientTypes.js';
-import { QRCode, Gradient, FilterFunction, Options } from '../types';
+import { QRCode, FilterFunction, Options } from '../types';
 import getMode from '../tools/getMode.js';
-import { Canvas, CanvasRenderingContext2D, ExportFormat, RenderOptions, loadImage, Image } from 'skia-canvas';
+// import { Canvas, CanvasRenderingContext2D, ExportFormat, RenderOptions, loadImage, Image } from 'skia-canvas';
+import { Canvas, Image, CanvasRenderingContext2D, loadImage, JpegConfig, PdfConfig, PngConfig } from 'canvas'
 import qrcode from 'qrcode-generator';
-import fs from 'fs';
 import mergeDeep from '../tools/merge.js';
 import sanitizeOptions from '../tools/sanitizeOptions.js';
 
@@ -116,7 +115,6 @@ export default class QRCanvas {
     }
 
     this.clear();
-    this.drawBackground();
     this.drawDots((i: number, j: number): boolean => {
       if (this._options.imageOptions.hideBackgroundDots) {
         if (
@@ -143,34 +141,6 @@ export default class QRCanvas {
 
     if (this._options.image !== undefined) {
       this.drawImage({ width: drawImageSize.width, height: drawImageSize.height, count, dotSize });
-    }
-  }
-
-  private drawBackground(): void {
-    const canvasContext = this.context;
-    const options = this._options;
-
-    if (canvasContext) {
-      if (options.backgroundOptions.gradient) {
-        const gradientOptions = options.backgroundOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: 0,
-          x: 0,
-          y: 0,
-          size: this._canvas.width > this._canvas.height ? this._canvas.width : this._canvas.height
-        });
-
-        gradientOptions.colorStops.forEach(({ offset, color }: { offset: number; color: string }) => {
-          gradient.addColorStop(offset, color);
-        });
-
-        canvasContext.fillStyle = gradient;
-      } else if (options.backgroundOptions.color) {
-        canvasContext.fillStyle = options.backgroundOptions.color;
-      }
-      canvasContext.fillRect(0, 0, this._canvas.width, this._canvas.height);
     }
   }
 
@@ -220,23 +190,7 @@ export default class QRCanvas {
       }
     }
 
-    if (options.dotsOptions.gradient) {
-      const gradientOptions = options.dotsOptions.gradient;
-      const gradient = this._createGradient({
-        context: canvasContext,
-        options: gradientOptions,
-        additionalRotation: 0,
-        x: xBeginning,
-        y: yBeginning,
-        size: count * dotSize
-      });
-
-      gradientOptions.colorStops.forEach(({ offset, color }: { offset: number; color: string }) => {
-        gradient.addColorStop(offset, color);
-      });
-
-      canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-    } else if (options.dotsOptions.color) {
+    if (options.dotsOptions.color) {
       canvasContext.fillStyle = canvasContext.strokeStyle = options.dotsOptions.color;
     }
 
@@ -302,23 +256,7 @@ export default class QRCanvas {
         }
       }
 
-      if (options.cornersSquareOptions?.gradient) {
-        const gradientOptions = options.cornersSquareOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: rotation,
-          x,
-          y,
-          size: cornersSquareSize
-        });
-
-        gradientOptions.colorStops.forEach(({ offset, color }: { offset: number; color: string }) => {
-          gradient.addColorStop(offset, color);
-        });
-
-        canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-      } else if (options.cornersSquareOptions?.color) {
+      if (options.cornersSquareOptions?.color) {
         canvasContext.fillStyle = canvasContext.strokeStyle = options.cornersSquareOptions.color;
       }
 
@@ -350,23 +288,7 @@ export default class QRCanvas {
         }
       }
 
-      if (options.cornersDotOptions?.gradient) {
-        const gradientOptions = options.cornersDotOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: rotation,
-          x: x + dotSize * 2,
-          y: y + dotSize * 2,
-          size: cornersDotSize
-        });
-
-        gradientOptions.colorStops.forEach(({ offset, color }: { offset: number; color: string }) => {
-          gradient.addColorStop(offset, color);
-        });
-
-        canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-      } else if (options.cornersDotOptions?.color) {
+      if (options.cornersDotOptions?.color) {
         canvasContext.fillStyle = canvasContext.strokeStyle = options.cornersDotOptions.color;
       }
 
@@ -406,96 +328,27 @@ export default class QRCanvas {
     canvasContext.drawImage(this._image, dx, dy, dw < 0 ? 0 : dw, dh < 0 ? 0 : dh);
   }
 
-  private _createGradient({
-    context,
-    options,
-    additionalRotation,
-    x,
-    y,
-    size
-  }: {
-    context: CanvasRenderingContext2D;
-    options: Gradient;
-    additionalRotation: number;
-    x: number;
-    y: number;
-    size: number;
-  }): CanvasGradient {
-    let gradient;
 
-    if (options.type === gradientTypes.radial) {
-      gradient = context.createRadialGradient(x + size / 2, y + size / 2, 0, x + size / 2, y + size / 2, size / 2);
-    } else {
-      const rotation = ((options.rotation || 0) + additionalRotation) % (2 * Math.PI);
-      const positiveRotation = (rotation + 2 * Math.PI) % (2 * Math.PI);
-      let x0 = x + size / 2;
-      let y0 = y + size / 2;
-      let x1 = x + size / 2;
-      let y1 = y + size / 2;
-
-      if (
-        (positiveRotation >= 0 && positiveRotation <= 0.25 * Math.PI) ||
-        (positiveRotation > 1.75 * Math.PI && positiveRotation <= 2 * Math.PI)
-      ) {
-        x0 = x0 - size / 2;
-        y0 = y0 - (size / 2) * Math.tan(rotation);
-        x1 = x1 + size / 2;
-        y1 = y1 + (size / 2) * Math.tan(rotation);
-      } else if (positiveRotation > 0.25 * Math.PI && positiveRotation <= 0.75 * Math.PI) {
-        y0 = y0 - size / 2;
-        x0 = x0 - size / 2 / Math.tan(rotation);
-        y1 = y1 + size / 2;
-        x1 = x1 + size / 2 / Math.tan(rotation);
-      } else if (positiveRotation > 0.75 * Math.PI && positiveRotation <= 1.25 * Math.PI) {
-        x0 = x0 + size / 2;
-        y0 = y0 + (size / 2) * Math.tan(rotation);
-        x1 = x1 - size / 2;
-        y1 = y1 - (size / 2) * Math.tan(rotation);
-      } else if (positiveRotation > 1.25 * Math.PI && positiveRotation <= 1.75 * Math.PI) {
-        y0 = y0 + size / 2;
-        x0 = x0 + size / 2 / Math.tan(rotation);
-        y1 = y1 - size / 2;
-        x1 = x1 - size / 2 / Math.tan(rotation);
-      }
-
-      gradient = context.createLinearGradient(Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1));
+  async toBuffer(mimeType: string = 'application/pdf', options?: JpegConfig | PdfConfig | PngConfig): Promise<Buffer> {
+    await this.created;
+    switch (mimeType) {
+      case 'image/jpeg':
+        return this._canvas.toBuffer('image/jpeg', options as JpegConfig);
+      case 'image/png':
+        return this._canvas.toBuffer('image/png', options as PngConfig);
+      default:
+        return this._canvas.toBuffer('application/pdf', options as PdfConfig);
     }
-
-    return gradient;
   }
 
-  /**
-   * Create a buffer object with the content of the qr code
-   *
-   * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-   * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-   */
-  async toBuffer(format: ExportFormat = 'png', options?: RenderOptions): Promise<Buffer> {
+  async toDataUrl(mimeType: 'image/png' | 'image/jpeg' = 'image/png'): Promise<string> {
     await this.created;
-    return this._canvas.toBuffer(format, options);
+    switch (mimeType) {
+      case 'image/jpeg':
+        return this._canvas.toDataURL('image/jpeg');
+      default:
+        return this._canvas.toDataURL('image/png');
+    }
   }
 
-  /**
-   *  Create a data url with the content of the qr code
-   *
-   * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-   * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-   */
-  async toDataUrl(format: ExportFormat = 'png', options?: RenderOptions): Promise<string> {
-    await this.created;
-    return this._canvas.toDataURL(format, options);
-  }
-
-  /**
-   * Create a file of the qr code and save it to disk
-   *
-   * @param filePath file path including extension
-   * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-   * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-   * @returns a promise that resolves once the file was written to disk
-   */
-  async toFile(filePath: string, format: ExportFormat = 'png', options?: RenderOptions): Promise<void> {
-    await this.created;
-    return fs.promises.writeFile(filePath, await this._canvas.toBuffer(format, options));
-  }
 }

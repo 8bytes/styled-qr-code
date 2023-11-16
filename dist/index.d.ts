@@ -1,4 +1,4 @@
-import { CanvasRenderingContext2D, Image, ExportFormat, RenderOptions } from 'skia-canvas';
+import { CanvasRenderingContext2D, Image, JpegConfig, PdfConfig, PngConfig } from 'canvas';
 
 interface UnknownObject {
     [key: string]: any;
@@ -7,20 +7,8 @@ declare type DotType = 'dots' | 'rounded' | 'classy' | 'classy-rounded' | 'squar
 declare type CornerDotType = 'dot' | 'square';
 declare type CornerSquareType = 'dot' | 'square' | 'extra-rounded';
 declare type Extension = 'svg' | 'png' | 'jpeg' | 'webp';
-declare type GradientType = 'radial' | 'linear';
-declare type Gradient = {
-    type: GradientType;
-    rotation?: number;
-    colorStops: {
-        offset: number;
-        color: string;
-    }[];
-};
 interface DotTypes {
     [key: string]: DotType;
-}
-interface GradientTypes {
-    [key: string]: GradientType;
 }
 interface CornerDotTypes {
     [key: string]: CornerDotType;
@@ -68,21 +56,14 @@ declare type Options = {
     dotsOptions?: {
         type?: DotType;
         color?: string;
-        gradient?: Gradient;
     };
     cornersSquareOptions?: {
         type?: CornerSquareType;
         color?: string;
-        gradient?: Gradient;
     };
     cornersDotOptions?: {
         type?: CornerDotType;
         color?: string;
-        gradient?: Gradient;
-    };
-    backgroundOptions?: {
-        color?: string;
-        gradient?: Gradient;
     };
 };
 declare type FilterFunction = (i: number, j: number) => boolean;
@@ -135,34 +116,11 @@ declare class QRCanvas {
     get height(): number;
     private clear;
     private drawQR;
-    private drawBackground;
     private drawDots;
     private drawCorners;
     private drawImage;
-    private _createGradient;
-    /**
-     * Create a buffer object with the content of the qr code
-     *
-     * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-     * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-     */
-    toBuffer(format?: ExportFormat, options?: RenderOptions): Promise<Buffer>;
-    /**
-     *  Create a data url with the content of the qr code
-     *
-     * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-     * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-     */
-    toDataUrl(format?: ExportFormat, options?: RenderOptions): Promise<string>;
-    /**
-     * Create a file of the qr code and save it to disk
-     *
-     * @param filePath file path including extension
-     * @param format Supported types: "png" | "jpg" | "jpeg" | "pdf" | "svg"
-     * @param options export options see https://github.com/samizdatco/skia-canvas#tobufferformat-page-matte-density-quality-outline
-     * @returns a promise that resolves once the file was written to disk
-     */
-    toFile(filePath: string, format?: ExportFormat, options?: RenderOptions): Promise<void>;
+    toBuffer(mimeType?: string, options?: JpegConfig | PdfConfig | PngConfig): Promise<Buffer>;
+    toDataUrl(mimeType?: 'image/png' | 'image/jpeg'): Promise<string>;
 }
 
 declare const _default$5: DotTypes;
@@ -191,4 +149,4 @@ interface TypesMap {
 }
 declare const qrTypes: TypesMap;
 
-export { BasicFigureDrawArgs, BasicFigureDrawArgsCanvas, CornerDotType, CornerDotTypes, CornerSquareType, CornerSquareTypes, DotType, DotTypes, DownloadOptions, DrawArgs, DrawArgsCanvas, ErrorCorrectionLevel, Extension, FilterFunction, GetNeighbor, Gradient, GradientType, GradientTypes, Mode, Options, QRCode, QRCanvas as QRCodeCanvas, RotateFigureArgs, RotateFigureArgsCanvas, TypeNumber, UnknownObject, _default$4 as cornerDotTypes, _default$3 as cornerSquareTypes, _default$5 as dotTypes, _default$2 as errorCorrectionLevels, _default$1 as errorCorrectionPercents, _default as modes, qrTypes };
+export { BasicFigureDrawArgs, BasicFigureDrawArgsCanvas, CornerDotType, CornerDotTypes, CornerSquareType, CornerSquareTypes, DotType, DotTypes, DownloadOptions, DrawArgs, DrawArgsCanvas, ErrorCorrectionLevel, Extension, FilterFunction, GetNeighbor, Mode, Options, QRCode, QRCanvas as QRCodeCanvas, RotateFigureArgs, RotateFigureArgsCanvas, TypeNumber, UnknownObject, _default$4 as cornerDotTypes, _default$3 as cornerSquareTypes, _default$5 as dotTypes, _default$2 as errorCorrectionLevels, _default$1 as errorCorrectionPercents, _default as modes, qrTypes };

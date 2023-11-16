@@ -1,7 +1,7 @@
 import dotTypes from '../../constants/dotTypes.js';
 import { DotType, GetNeighbor, RotateFigureArgsCanvas, BasicFigureDrawArgsCanvas, DrawArgsCanvas } from '../../types';
 
-import type { CanvasRenderingContext2D } from 'skia-canvas';
+import type { CanvasRenderingContext2D } from 'canvas';
 
 export default class QRDot {
   _context: CanvasRenderingContext2D;
@@ -25,7 +25,7 @@ export default class QRDot {
         drawFunction = this._drawClassy;
         break;
       case dotTypes.classyRounded:
-        drawFunction = this._drawClassyRounded;
+        drawFunction = this._drawClassyRounded; 
         break;
       case dotTypes.rounded:
         drawFunction = this._drawRounded;

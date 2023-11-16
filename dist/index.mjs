@@ -505,18 +505,9 @@ var defaultOptions = {
   dotsOptions: {
     type: "square",
     color: "#000"
-  },
-  backgroundOptions: {
-    color: "#fff"
   }
 };
 var QROptions_default = defaultOptions;
-
-// src/constants/gradientTypes.ts
-var gradientTypes_default = {
-  radial: "radial",
-  linear: "linear"
-};
 
 // src/constants/modes.ts
 var modes_default = {
@@ -539,9 +530,8 @@ function getMode(data) {
 }
 
 // src/core/QRCanvas.ts
-import { Canvas, loadImage } from "skia-canvas";
+import { Canvas, loadImage } from "canvas";
 import qrcode from "qrcode-generator";
-import fs from "fs";
 
 // src/tools/merge.ts
 var isObject = (obj) => !!obj && typeof obj === "object" && !Array.isArray(obj);
@@ -567,22 +557,6 @@ function mergeDeep(target, ...sources) {
 }
 
 // src/tools/sanitizeOptions.ts
-function sanitizeGradient(gradient) {
-  const newGradient = { ...gradient };
-  if (!newGradient.colorStops || !newGradient.colorStops.length) {
-    throw "Field 'colorStops' is required in gradient";
-  }
-  if (newGradient.rotation) {
-    newGradient.rotation = Number(newGradient.rotation);
-  } else {
-    newGradient.rotation = 0;
-  }
-  newGradient.colorStops = newGradient.colorStops.map((colorStop) => ({
-    ...colorStop,
-    offset: Number(colorStop.offset)
-  }));
-  return newGradient;
-}
 function sanitizeOptions(options) {
   const newOptions = { ...options };
   newOptions.width = Number(newOptions.width);
@@ -600,32 +574,15 @@ function sanitizeOptions(options) {
   newOptions.dotsOptions = {
     ...newOptions.dotsOptions
   };
-  if (newOptions.dotsOptions.gradient) {
-    newOptions.dotsOptions.gradient = sanitizeGradient(newOptions.dotsOptions.gradient);
-  }
   if (newOptions.cornersSquareOptions) {
     newOptions.cornersSquareOptions = {
       ...newOptions.cornersSquareOptions
     };
-    if (newOptions.cornersSquareOptions.gradient) {
-      newOptions.cornersSquareOptions.gradient = sanitizeGradient(newOptions.cornersSquareOptions.gradient);
-    }
   }
   if (newOptions.cornersDotOptions) {
     newOptions.cornersDotOptions = {
       ...newOptions.cornersDotOptions
     };
-    if (newOptions.cornersDotOptions.gradient) {
-      newOptions.cornersDotOptions.gradient = sanitizeGradient(newOptions.cornersDotOptions.gradient);
-    }
-  }
-  if (newOptions.backgroundOptions) {
-    newOptions.backgroundOptions = {
-      ...newOptions.backgroundOptions
-    };
-    if (newOptions.backgroundOptions.gradient) {
-      newOptions.backgroundOptions.gradient = sanitizeGradient(newOptions.backgroundOptions.gradient);
-    }
   }
   return newOptions;
 }
@@ -707,7 +664,6 @@ var QRCanvas = class {
       });
     }
     this.clear();
-    this.drawBackground();
     this.drawDots((i, j) => {
       var _a, _b, _c, _d, _e, _f;
       if (this._options.imageOptions.hideBackgroundDots) {
@@ -726,30 +682,6 @@ var QRCanvas = class {
     this.drawCorners();
     if (this._options.image !== void 0) {
       this.drawImage({ width: drawImageSize.width, height: drawImageSize.height, count, dotSize });
-    }
-  }
-  drawBackground() {
-    const canvasContext = this.context;
-    const options = this._options;
-    if (canvasContext) {
-      if (options.backgroundOptions.gradient) {
-        const gradientOptions = options.backgroundOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: 0,
-          x: 0,
-          y: 0,
-          size: this._canvas.width > this._canvas.height ? this._canvas.width : this._canvas.height
-        });
-        gradientOptions.colorStops.forEach(({ offset, color }) => {
-          gradient.addColorStop(offset, color);
-        });
-        canvasContext.fillStyle = gradient;
-      } else if (options.backgroundOptions.color) {
-        canvasContext.fillStyle = options.backgroundOptions.color;
-      }
-      canvasContext.fillRect(0, 0, this._canvas.width, this._canvas.height);
     }
   }
   drawDots(filter) {
@@ -790,21 +722,7 @@ var QRCanvas = class {
         });
       }
     }
-    if (options.dotsOptions.gradient) {
-      const gradientOptions = options.dotsOptions.gradient;
-      const gradient = this._createGradient({
-        context: canvasContext,
-        options: gradientOptions,
-        additionalRotation: 0,
-        x: xBeginning,
-        y: yBeginning,
-        size: count * dotSize
-      });
-      gradientOptions.colorStops.forEach(({ offset, color }) => {
-        gradient.addColorStop(offset, color);
-      });
-      canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-    } else if (options.dotsOptions.color) {
+    if (options.dotsOptions.color) {
       canvasContext.fillStyle = canvasContext.strokeStyle = options.dotsOptions.color;
     }
     canvasContext.fill("evenodd");
@@ -830,7 +748,7 @@ var QRCanvas = class {
       [1, 0, Math.PI / 2],
       [0, 1, -Math.PI / 2]
     ].forEach(([column, row, rotation]) => {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+      var _a, _b, _c, _d, _e, _f, _g, _h;
       if (filter && !filter(column, row)) {
         return;
       }
@@ -860,26 +778,12 @@ var QRCanvas = class {
           }
         }
       }
-      if ((_d = options.cornersSquareOptions) == null ? void 0 : _d.gradient) {
-        const gradientOptions = options.cornersSquareOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: rotation,
-          x,
-          y,
-          size: cornersSquareSize
-        });
-        gradientOptions.colorStops.forEach(({ offset, color }) => {
-          gradient.addColorStop(offset, color);
-        });
-        canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-      } else if ((_e = options.cornersSquareOptions) == null ? void 0 : _e.color) {
+      if ((_d = options.cornersSquareOptions) == null ? void 0 : _d.color) {
         canvasContext.fillStyle = canvasContext.strokeStyle = options.cornersSquareOptions.color;
       }
       canvasContext.fill("evenodd");
-      if ((_f = options.cornersDotOptions) == null ? void 0 : _f.type) {
-        const cornersDot = new QRCornerDot({ context: canvasContext, type: (_g = options.cornersDotOptions) == null ? void 0 : _g.type });
+      if ((_e = options.cornersDotOptions) == null ? void 0 : _e.type) {
+        const cornersDot = new QRCornerDot({ context: canvasContext, type: (_f = options.cornersDotOptions) == null ? void 0 : _f.type });
         canvasContext.beginPath();
         cornersDot.draw(x + dotSize * 2, y + dotSize * 2, cornersDotSize, rotation);
       } else {
@@ -887,7 +791,7 @@ var QRCanvas = class {
         canvasContext.beginPath();
         for (let i = 0; i < dotMask.length; i++) {
           for (let j = 0; j < dotMask[i].length; j++) {
-            if (!((_h = dotMask[i]) == null ? void 0 : _h[j])) {
+            if (!((_g = dotMask[i]) == null ? void 0 : _g[j])) {
               continue;
             }
             dot.draw(
@@ -902,21 +806,7 @@ var QRCanvas = class {
           }
         }
       }
-      if ((_i = options.cornersDotOptions) == null ? void 0 : _i.gradient) {
-        const gradientOptions = options.cornersDotOptions.gradient;
-        const gradient = this._createGradient({
-          context: canvasContext,
-          options: gradientOptions,
-          additionalRotation: rotation,
-          x: x + dotSize * 2,
-          y: y + dotSize * 2,
-          size: cornersDotSize
-        });
-        gradientOptions.colorStops.forEach(({ offset, color }) => {
-          gradient.addColorStop(offset, color);
-        });
-        canvasContext.fillStyle = canvasContext.strokeStyle = gradient;
-      } else if ((_j = options.cornersDotOptions) == null ? void 0 : _j.color) {
+      if ((_h = options.cornersDotOptions) == null ? void 0 : _h.color) {
         canvasContext.fillStyle = canvasContext.strokeStyle = options.cornersDotOptions.color;
       }
       canvasContext.fill("evenodd");
@@ -944,60 +834,25 @@ var QRCanvas = class {
     const dh = height - options.imageOptions.margin * 2;
     canvasContext.drawImage(this._image, dx, dy, dw < 0 ? 0 : dw, dh < 0 ? 0 : dh);
   }
-  _createGradient({
-    context,
-    options,
-    additionalRotation,
-    x,
-    y,
-    size
-  }) {
-    let gradient;
-    if (options.type === gradientTypes_default.radial) {
-      gradient = context.createRadialGradient(x + size / 2, y + size / 2, 0, x + size / 2, y + size / 2, size / 2);
-    } else {
-      const rotation = ((options.rotation || 0) + additionalRotation) % (2 * Math.PI);
-      const positiveRotation = (rotation + 2 * Math.PI) % (2 * Math.PI);
-      let x0 = x + size / 2;
-      let y0 = y + size / 2;
-      let x1 = x + size / 2;
-      let y1 = y + size / 2;
-      if (positiveRotation >= 0 && positiveRotation <= 0.25 * Math.PI || positiveRotation > 1.75 * Math.PI && positiveRotation <= 2 * Math.PI) {
-        x0 = x0 - size / 2;
-        y0 = y0 - size / 2 * Math.tan(rotation);
-        x1 = x1 + size / 2;
-        y1 = y1 + size / 2 * Math.tan(rotation);
-      } else if (positiveRotation > 0.25 * Math.PI && positiveRotation <= 0.75 * Math.PI) {
-        y0 = y0 - size / 2;
-        x0 = x0 - size / 2 / Math.tan(rotation);
-        y1 = y1 + size / 2;
-        x1 = x1 + size / 2 / Math.tan(rotation);
-      } else if (positiveRotation > 0.75 * Math.PI && positiveRotation <= 1.25 * Math.PI) {
-        x0 = x0 + size / 2;
-        y0 = y0 + size / 2 * Math.tan(rotation);
-        x1 = x1 - size / 2;
-        y1 = y1 - size / 2 * Math.tan(rotation);
-      } else if (positiveRotation > 1.25 * Math.PI && positiveRotation <= 1.75 * Math.PI) {
-        y0 = y0 + size / 2;
-        x0 = x0 + size / 2 / Math.tan(rotation);
-        y1 = y1 - size / 2;
-        x1 = x1 - size / 2 / Math.tan(rotation);
-      }
-      gradient = context.createLinearGradient(Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1));
+  async toBuffer(mimeType = "application/pdf", options) {
+    await this.created;
+    switch (mimeType) {
+      case "image/jpeg":
+        return this._canvas.toBuffer("image/jpeg", options);
+      case "image/png":
+        return this._canvas.toBuffer("image/png", options);
+      default:
+        return this._canvas.toBuffer("application/pdf", options);
     }
-    return gradient;
   }
-  async toBuffer(format = "png", options) {
+  async toDataUrl(mimeType = "image/png") {
     await this.created;
-    return this._canvas.toBuffer(format, options);
-  }
-  async toDataUrl(format = "png", options) {
-    await this.created;
-    return this._canvas.toDataURL(format, options);
-  }
-  async toFile(filePath, format = "png", options) {
-    await this.created;
-    return fs.promises.writeFile(filePath, await this._canvas.toBuffer(format, options));
+    switch (mimeType) {
+      case "image/jpeg":
+        return this._canvas.toDataURL("image/jpeg");
+      default:
+        return this._canvas.toDataURL("image/png");
+    }
   }
 };
 export {

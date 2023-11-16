@@ -16,8 +16,8 @@
     }
   },
   "dependencies": {
-    "qrcode-generator": "^1.4.4",
-    "skia-canvas": "^1.0.0"
+    "canvas": "^2.11.2",
+    "qrcode-generator": "^1.4.4"
   },
   "devDependencies": {
     "@types/node": "^20.6.0",

@@ -1,4 +1,4 @@
-import type { CanvasRenderingContext2D, Image } from 'skia-canvas';
+import type { CanvasRenderingContext2D, Image } from 'canvas';
 
 export interface UnknownObject {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -9,23 +9,9 @@ export type DotType = 'dots' | 'rounded' | 'classy' | 'classy-rounded' | 'square
 export type CornerDotType = 'dot' | 'square';
 export type CornerSquareType = 'dot' | 'square' | 'extra-rounded';
 export type Extension = 'svg' | 'png' | 'jpeg' | 'webp';
-export type GradientType = 'radial' | 'linear';
-
-export type Gradient = {
-  type: GradientType;
-  rotation?: number;
-  colorStops: {
-    offset: number;
-    color: string;
-  }[];
-};
 
 export interface DotTypes {
   [key: string]: DotType;
-}
-
-export interface GradientTypes {
-  [key: string]: GradientType;
 }
 
 export interface CornerDotTypes {
@@ -115,21 +101,14 @@ export type Options = {
   dotsOptions?: {
     type?: DotType;
     color?: string;
-    gradient?: Gradient;
   };
   cornersSquareOptions?: {
     type?: CornerSquareType;
     color?: string;
-    gradient?: Gradient;
   };
   cornersDotOptions?: {
     type?: CornerDotType;
     color?: string;
-    gradient?: Gradient;
-  };
-  backgroundOptions?: {
-    color?: string;
-    gradient?: Gradient;
   };
 };
 
